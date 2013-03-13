@@ -180,13 +180,13 @@ in \cite{mip} for triangular grids. The MIP-DSA equations are SPD and thus are s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The Discontinuous Finite Element Method (DFEM) is a common spatial discretization tehcnique for 
+The Discontinuous Finite Element Method (DFEM) is a common spatial discretization technique for 
 the discrete-ordinate (\sn) transport equations. 
 The scattering source is usually converged using either a Richardson method, i.e., the Source Iteration (SI) technique,
 or a Krylov subspace approach (typically GMRes). 
 For highly diffusive materials in optically thick configurations, these iterative techniques 
 can become quite ineffective, requiring high iteration counts.
-However, SI and GMRES-based transport solves 
+However, SI and GMRes-based transport solves 
 can be accelerated (preconditioned) with DSA approaches \cite{dsa_ref},
 leading to preconditioned Richardson and preconditioned GMRes versions, respectively.
 %However, both SI and GMRes can become inefficiently 
@@ -231,7 +231,7 @@ propose extensions to this work in Section~\ref{sec:ccl}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Discontinuous finite element approximations are well-established for elliptic equations; see, for
-instance, \cite{}. The interior penalty family of methods has its origin in Nitsche's weak enforcement
+instance, \cite{Kanschat2007}. The interior penalty family of methods has its origin in Nitsche's weak enforcement
 of Dirichlet boundary conditions \cite{nitsche}: rather than imposing that the numerical solution be equal to the
 user-specified boundary value, Nitsche proposed to add the following term (appropriately weighted) 
 in the weak formulation $\int_{\partial V} (\Phi^{Dir}-\Phi)^2$; 
@@ -263,7 +263,7 @@ where the bilinear form is:
 \begin{equation}
 \label{eq:matrix-ip-form}
   \begin{split}
-    b_{IP} (\phi,\tf) =& \(D\bn\phi,\bn b\)_{\mc{T}_h} + \(\Sigma_a \phi,\tf\)_{\mc{T}_h}  +
+    b_{IP} (\phi,\tf) =& \(D\bn\phi,\bn \tf\)_{\mc{T}_h} + \(\Sigma_a \phi,\tf\)_{\mc{T}_h}  +
     (\kappa_e^{IP}\jmp{\phi},\jmp{\tf})_{E_h^i}\\
     &+ \( \jmp{\phi}, \mvl{D\partial_n \tf}\)_{E_h^i}
      + \( \jmp{\tf}, \mvl{D\partial_n \phi}\)_{E_h^i} \\
@@ -283,12 +283,12 @@ where $\mc{T}_h$ is the mesh used to discretize $\mc{D}$ into non-overlapping
 elements $K$, such that the union of the elements fully covers $\mc{D}$, $E_h^i$ is 
 the set of interior edges such that $E_h^i= \cup _{K_1,K_2\in \mc{T}_h}(\partial K_1 \cap \partial K_2)$,
 and $\tf$ a bilinear discontinuous basis function. These BLD functions, given for the cell spanning 
-$[0,{\Delta _x}]\times[0, \Delta y]$, are:
+$[0,{\Delta x}]\times[0, \Delta y]$, are:
 \begin{align*}
-& \tf_1 = \frac{{\Delta _x}-x}{{\Delta _x}}\frac{\Delta y-y}{\Delta y}\\
-& \tf_2 = \frac{x}{{\Delta _x}} \frac{\Delta y-y}{\Delta y}\\
-& \tf_3 = \frac{x}{{\Delta _x}}\frac{y}{\Delta y}\\
-& \tf_4 = \frac{{\Delta _x}-x}{{\Delta _x}}\frac{y}{\Delta y}
+& \tf_1 = \frac{{\Delta x}-x}{{\Delta x}}\frac{\Delta y-y}{\Delta y}\\
+& \tf_2 = \frac{x}{{\Delta x}} \frac{\Delta y-y}{\Delta y}\\
+& \tf_3 = \frac{x}{{\Delta x}}\frac{y}{\Delta y}\\
+& \tf_4 = \frac{{\Delta x}-x}{{\Delta x}}\frac{y}{\Delta y}
 \end{align*}
 We also have defined the jump and mean values as:
 \begin{equation}
@@ -321,7 +321,7 @@ be used to solve the associated linear system. In addition, the weak form is als
 especially in $xy$ rectangular geometries. Let the domain $\mc{D}$ be decomposed into a $n_x \times n_y$ cells 
 and denote any cell in the domain by a pair of indices $(i,j)$, where 
 $1 \le i \le n_x$ and $1 \le j \le n_y$. Further assign the local vertex numbering $local=[1,2,3,4]$ to the
-top-right, top-left, bottom-left, bottom-right vertices of any rectangular cell. Then, the global index of
+bottom-left, bottom-right, top-right, top-left vertices of any rectangular cell. Then, the global index of
 the bilinear unknowns in any cell $(i,j)$ can be assigned as follows (this is just one possibility among others):
 \begin{equation}
 4\left( n_x(j-1)+(i-1) \right) +local(k) \qquad \text{for} \quad k =1, ..., 4
@@ -329,11 +329,11 @@ the bilinear unknowns in any cell $(i,j)$ can be assigned as follows (this is ju
 Thus, assembling the global diffusion may consist in two loops. One loop over the elements $K$ in order to evaluate 
 the volumetric terms in \eqt{eq:matrix-ip-form} and \eqt{eq:rhs-ip-form}, and one loop over the set of edges 
 (interior edges and boundary edges) in order to evaluate the edge terms in \eqt{eq:matrix-ip-form} and \eqt{eq:rhs-ip-form}.
-All elementary matrices (for volumetric and surfacic terms appearing the the weak form) are 
+All elementary matrices (for volumetric and surfacic terms appearing the weak form) are 
 given in the Appendix for completeness.\\
 %
 In \fig{fig:ip}, we give a sample diffusion result obtained for the symmetric interior penalty formulation using BLD finite elements. The domain is 
-$150 \times 150$, with homogenous properties ($D=\tfrac 1 3$, $\Sigma_a=0.1$, the external volumetric source is $Q_0=10$, vacuum boundaries are applied.
+$150 \times 150$, with homogeneous properties ($D=\tfrac 1 3$, $\Sigma_a=0.1$), the external volumetric source is $Q_0=10$, vacuum boundaries are applied.
 The left pane in \fig{fig:ip} shows the answer with a $10\times 10$ grid, the right pane, with a $100 \times 100$ grid.
 
 \begin{figure}[!hbtp]
@@ -404,12 +404,12 @@ solve the system of equations:
 \begin{equation}
   \(\bs{I} - \bs{DL}^{-1}\bs{M \Sigma}\) \Phi = \bs{DL}^{-1}S .
 \end{equation}
-Both the SI and the GMRES approaches require transport sweeps (the action of
+Both the SI and the GMRes approaches require transport sweeps (the action of
 $\bs{L}^{-1}$ is required in both procedures).
 
 When the scattering ratio $c=\frac{\Sigma_s}{\Sigma_t}$ tends to one in
-optically thick domains, the number of SI and GMRES iterations can become large. To
-accelerate the convergence, a DSA preconditioner is needed; the Modifed IP
+optically thick domains, the number of SI and GMRes iterations can become large. To
+accelerate the convergence, a DSA preconditioner is needed; the Modified IP
 discontinuous finite element discretization of the diffusion equation for
 rectangular grids is presented next.
 
@@ -451,9 +451,9 @@ be written with a vacuum boundary condition):
 In our case, the diffusion matrix $\bs{A}$ is exactly the one obtained from the bilinear form \eqt{eq:matrix-ip-form},
 except for its penalty coefficient $\kappa_e^{IP}$ being changed to $\kappa_e^{MIP}$, given below: 
 \begin{equation}
-\kappa_e^{MIP} = \max \( tfrac{1}{4}\, , \, \kappa_e^{IP} \) .
+\kappa_e^{MIP} = \max \( \frac{1}{4}\, , \, \kappa_e^{IP} \) .
 \end{equation}
-In doing, we followed \cite{mip} where the same modification of the penalty coefficient was performed 
+In doing so, we followed \cite{mip} where the same modification of the penalty coefficient was performed 
 for triangular meshes and the Fourier analyses revealed the stability of the scheme. 
 Our Fourier analyses for BLD are given in the Results Section below.
 
@@ -468,7 +468,7 @@ final form of that system is:
   \(\bs{I} +\bs{A}^{-1} \bs{\Sigma}\)\(\bs{I}-\bs{DL}^{-1}\bs{M\Sigma}\) \Psi
   = \(\bs{I}+\bs{A}^{-1}\bs{\Sigma}\) \bs{DL}^{-1} S.
 \end{equation}
-Both approaches, SI+DSA or DSA-preconditioned GMRES, require a linear system
+Both approaches, SI+DSA or DSA-preconditioned GMRes, require a linear system
 solve involving the diffusion matrix $\bs{A}$. Ideally, such a matrix should
 be SPD (such that efficient techniques can be employed in its linear solve)
 and easy to form (even on arbitrary grids).
@@ -606,8 +606,8 @@ For completeness, the elementary matrices needed to assemble the global matrix c
 bilinear form \eqt{eq:matrix-ip-form} are given below. The BLD basis functions $\( \tf_{k} \)_{1 \le k \le 4}$
 were given earlier, in Section~\ref{sec:ip}. 
 
-Matrices' names that are \underline{{\bf underlined and bold}} are elemntary matrices not present in the DFEM
-desicretization of the transport equation. All other elementary matrices are already present in the transport discretization.
+Matrices' names that are \underline{{\bf underlined and bold}} are elementary matrices not present in the DFEM
+discretization of the transport equation. All other elementary matrices are already present in the transport discretization.
 
 The {\bf mass matrix} is given by :
 \begin{equation}
@@ -730,7 +730,6 @@ dy\\
 \end{pmatrix}
 \end{split}
 \end{equation}
-Acutally note that this matrix can be obtained from $E_{M,v}$ and $E_{M,v}^c$.
 %\item {\bf right edge} (assumed $\bs{n}\cdot\bs{1}_x = 1$)
 %\begin{equation}
 %\begin{split}
@@ -956,7 +955,6 @@ dy\\
 \end{pmatrix}
 \end{split}
 \end{equation}
-Acutally note that these matrices can also be obtained from $E_{M,v}$ and $E_{M,v}^c$.
 %
 %\item {\bf horizontal edge} (assumed $\bs{n}\cdot\bs{1}_y =1$) :
 %\begin{equation}
