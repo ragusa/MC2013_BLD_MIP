@@ -28,14 +28,12 @@
 \documentclass{mc2013}
 %
 %  various packages that you may wish to activate for usage 
-\usepackage{graphicx}
 \usepackage{tabls}
 \usepackage{afterpage}
 \usepackage{cites}
 %\usepackage{epsf}
-\usepackage{amssymb}
+% math
 \usepackage{amsmath}
-% more math
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{amstext}
@@ -48,7 +46,7 @@
 \usepackage{lscape} % utilisation du mode paysage
 \usepackage{mathbbol} % permet d'avoir le vrai symbol pour les reels grace a mathbb
 \usepackage{enumerate} % permet d'utiliser enumerate
-%\usepackage{marvosym} % permet d'avoir le symbol pour le nucleaire
+\usepackage{marvosym} % permet d'avoir le symbol pour le nucleaire
 \usepackage{moreverb} % permet d'utiliser verbatimtab : conservation la tabulation
 \usepackage{stmaryrd} % permet d'utiliser \llbrackedt et \rrbracket : double crochet
 \usepackage{caption}
@@ -240,7 +238,7 @@ solution, $\partial \mc{D}$ is the boundary of the computational domain $\mc{D}$
 include any ``interior interface'' (i.e., interfaces between cells). Many variants of interior penalty methods have
 been derived over the years (see the review articles \cite{Kanschat2007,ip-review}). Below, we briefly
 recall the symmetric interior penalty technique applied to diffusion equation. In Section~\ref{sec:mip},
-this technique will be slightly modified for use as a diffusion synthetic accelerator.
+this technique will be slightly modified for use as a Diffusion Synthetic Accelerator (DSA).
 %
 %
 Consider the following diffusion problem :
@@ -249,12 +247,14 @@ Consider the following diffusion problem :
 \end{equation}
 \begin{equation}
 %  \phi = \phi^D \ \textrm{ for } (x,y) \in \partial \mc{D}.
-\frac{1}{4}\phi - \frac{1}{2} D \partial_n \phi =J^{inc}\ \textrm{ for } (x,y) \in \partial \mc{D}.
+\frac{1}{4}\phi - \frac{1}{2} D \partial_n \phi = J^{inc}\ \textrm{ for } (x,y) \in \partial \mc{D}.
 \end{equation}
 %
 where $D$ is the diffusion coefficient, $\phi$ is the scalar flux, $\Sigma_a$
 is the absorption cross section, $Q_0$ is a volumetric source, $J^{inc}$ is an
-incoming current value. The weak form for the symmetric interior penalty is given by (see, e.g., \cite{Kanschat2007}):
+incoming current value; later, when employed as a DSA scheme, $Q_0$  will be changed to a fixed scattering source due to 
+the difference in scalar fluxes after a transport sweep, $\Sigma_s (\Phi^{(\ell+1/2)}-\Phi^{(\ell)})$ and $J^{inc}$
+will be set to 0 since known angular fluxes at the boundary result in no error for the DSA equations, hence an incoming current equal to 0. The weak form for the symmetric interior penalty is given by (see, e.g., \cite{Kanschat2007}):
 \begin{equation}
 \label{eq:ip-form}
   b_{IP}(\phi,\tf) = l_{IP}(\tf),
@@ -267,7 +267,7 @@ where the bilinear form is:
     (\kappa_e^{IP}\jmp{\phi},\jmp{\tf})_{E_h^i}\\
     &+ \( \jmp{\phi}, \mvl{D\partial_n \tf}\)_{E_h^i}
      + \( \jmp{\tf}, \mvl{D\partial_n \phi}\)_{E_h^i} \\
-    &+ \(2\kappa_e^{IP} \phi, \tf \)_{\partial \mc{D}}
+    &+ \( \kappa_e^{IP} \phi, \tf \)_{\partial \mc{D}}
     -\frac{1}{2}\(\phi,D\partial_n \tf\)_{\partial \mc{D}}
     -\frac{1}{2}\(D\partial_n\phi,\tf\)_{\partial \mc{D}}
   \end{split}
@@ -305,7 +305,7 @@ The penalty parameter $\kappa_e^{IP}$ is given:
     \end{aligned}
     \right.
 \end{equation}
-where $C$ is a constant (we used $C=2$) and $h_{\bot}$ is the
+where $C$ is a constant (we used $C=4$) and $h_{\bot}$ is the
 length of the cell in the direction orthogonal to edge $e$.  The $+$ and $-$
 symbols denote the values on either side of an edge. 
 The notations implying summation over all elements and all interior edges are explained below: 
@@ -475,7 +475,8 @@ and easy to form (even on arbitrary grids).
 
 Again, it is important to note that the preconditioned-SI and preconditioned GMRes systems 
 require the solution of a linear system involving the diffusion matrix $\bs{A}$. This matrix is 
-SPD and pCG or AMG techniques will be employed to solve such systems.
+SPD and, therefore, pCG or AMG techniques will be employed to solve such systems. In this paper,
+matrix $\bs{A}$ is built and stored in compressed sparse row (CSR) format.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -602,7 +603,7 @@ for arbitrary polygons.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-For completeness, the elementary matrices needed to assemble the global matrix corresponding to the
+For completeness, the elementary matrices needed to assemble the global diffusion matrix corresponding to the
 bilinear form \eqt{eq:matrix-ip-form} are given below. The BLD basis functions $\( \tf_{k} \)_{1 \le k \le 4}$
 were given earlier, in Section~\ref{sec:ip}. 
 
@@ -619,26 +620,32 @@ M = \frac{{\Delta _x}{\Delta _y}}{36}
 2 & 1 & 2 & 4 
 \end{pmatrix}
 \end{equation}
-The {\bf gradient matrix ($\partial_x$)} is given by :
-\begin{equation}
-\int \tf_i \frac{\partial \tf_j}{\partial x} d\br = \frac{{\Delta _y}}{12}
-\begin{pmatrix}
- -2 & -2 & -1 & -1 \\
-  2 &  2 &  1 &  1\\
-  1 &  1 &  2 &  2\\
- -1 & -1 & -2 & -2
-\end{pmatrix}
-\end{equation}
-The {\bf gradient matrix ($\partial_y$)} is given by :
-\begin{equation}
-\int \tf_i \frac{\partial \tf_j}{\partial y} d\br = \frac{{\Delta _x}}{12}
-\begin{pmatrix}
- -2 & -1 & -1 & -2 \\
- -1 & -2 & -2 & -1\\
-  1 &  2 &  2 &  1\\
-  2 &  1 &  1 &  2
-\end{pmatrix}
-\end{equation}
+%
+%
+% The {\bf gradient matrix ($\partial_x$)} is given by :
+% \begin{equation}
+% \int \tf_i \frac{\partial \tf_j}{\partial x} d\br = \frac{{\Delta _y}}{12}
+% \begin{pmatrix}
+%  -2 & -2 & -1 & -1 \\
+%   2 &  2 &  1 &  1\\
+%   1 &  1 &  2 &  2\\
+%  -1 & -1 & -2 & -2
+% \end{pmatrix}
+% \end{equation}
+%
+%
+% The {\bf gradient matrix ($\partial_y$)} is given by :
+% \begin{equation}
+% \int \tf_i \frac{\partial \tf_j}{\partial y} d\br = \frac{{\Delta _x}}{12}
+% \begin{pmatrix}
+%  -2 & -1 & -1 & -2 \\
+%  -1 & -2 & -2 & -1\\
+%   1 &  2 &  2 &  1\\
+%   2 &  1 &  1 &  2
+% \end{pmatrix}
+% \end{equation}
+%
+%
 The \underline{{\bf stiffness matrix}} is given by :
 \begin{equation}
 S = \frac{{\Delta _y}}{6{\Delta _x}}
@@ -656,6 +663,8 @@ S = \frac{{\Delta _y}}{6{\Delta _x}}
 -2 & -1 & 1 & 2 
 \end{pmatrix}
 \end{equation}
+%
+%
 The {\bf horizontal edge mass matrix} (e.g., for angular flux upwinding on outgoing edge) is given by :
 \begin{equation}
 E_{M,h} = \frac{{\Delta _x}}{6}
@@ -664,6 +673,8 @@ E_{M,h} = \frac{{\Delta _x}}{6}
 1 & 2 
 \end{pmatrix}
 \end{equation}
+%
+%
 The {\bf horizontal coupling edge mass matrix} (e.g., for angular flux upwinding on incoming edge) is given by :
 \begin{equation}
 E_{M,h}^c = \frac{{\Delta _x}}{6}
@@ -672,6 +683,8 @@ E_{M,h}^c = \frac{{\Delta _x}}{6}
 2 & 1 \\
 \end{pmatrix}
 \end{equation}
+%
+%
 The {\bf vertical edge mass matrix} is given by :
 \begin{equation}
 E_{M,v} = \frac{{\Delta _y}}{6}
@@ -680,6 +693,8 @@ E_{M,v} = \frac{{\Delta _y}}{6}
 1 & 2
 \end{pmatrix}
 \end{equation}
+%
+%
 The {\bf vertical coupling edge mass matrix} is given by :
 \begin{equation}
 E_{M,v}^c = \frac{{\Delta _y}}{6}
@@ -688,10 +703,12 @@ E_{M,v}^c = \frac{{\Delta _y}}{6}
 1 & 2 \\
 \end{pmatrix}
 \end{equation}
-The {\bf gradient edge mass matrix} $(\tf,\partial_{\bs{n}}
+%
+%
+The \underline{{\bf gradient edge mass matrix}} $(\tf,\partial_{\bs{n}}
 \tf)_{E_h^i}=\(\partial_{\bs{n}}\tf,\tf\)_{E_h^i}^T$ :
 \begin{itemize}
-\item {\bf left edge} (right, top and bottom edge gradient coupling matrices are obtained in a similar manner)  %(assumed $\bs{n}\cdot\bs{1}_x = 1$)
+\item \underline{{\bf left edge}} (right, top and bottom edge gradient coupling matrices are obtained in a similar manner)  %(assumed $\bs{n}\cdot\bs{1}_x = 1$)
 \begin{equation}
 \begin{split}
 \int_{0}^{{\Delta _y}} \partial_x \tf^{T} \cdot \tf\ dy &= \int_0^{\Delta _y}
@@ -849,11 +866,11 @@ dy\\
 %\end{split}
 %\end{equation}
 \end{itemize}
-The {\bf gradient coupling-edge mass matrix}
+The \underline{{\bf gradient coupling-edge mass matrix}}
 $(\tf^{\pm},\partial_{\bs{n}}\tf^{\pm})_{E_h^i}$ and
 $(\partial_{\bs{n}}\tf^{\pm},\tf^{\pm})_{E_h^i}$ :
 \begin{itemize}
-\item {\bf vertical edge} (right, top and bottom edge gradient coupling matrices are obtained in a similar manner)  %(assumed $\bs{n}\cdot \bs{1}_x =1$) :
+\item \underline{{\bf vertical edge}} (right, top and bottom edge gradient coupling matrices are obtained in a similar manner)  %(assumed $\bs{n}\cdot \bs{1}_x =1$) :
 \begin{equation}
 \begin{split}
 \(\tf^-,\partial_x \tf^{+}\)_{E_h^i} & = \int_0^{\Delta _y} \partial_x \tf^{+,T}\cdot
